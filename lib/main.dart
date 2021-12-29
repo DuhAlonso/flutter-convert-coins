@@ -5,17 +5,11 @@ import 'dart:convert';
 
 const request = "https://api.hgbrasil.com/finance?key=f462fa85";
 
-void main () async {
-
+void main() async {
   runApp(MaterialApp(
     home: Home(),
-
+    debugShowCheckedModeBanner: false,
   ));
-}
-
-Future<Map> getData() async {
-  http.Response response = await http.get(request);
-  return json.decode(response.body);
 }
 
 class Home extends StatefulWidget {
@@ -24,6 +18,10 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
+  Future<Map> getData() async {
+    http.Response response = await http.get(Uri.parse(request));
+    return jsonDecode(response.body);
+  }
 
   final realController = TextEditingController();
   final dolarController = TextEditingController();
@@ -32,14 +30,14 @@ class _HomeState extends State<Home> {
   double dolar;
   double euro;
 
-  void _clearAll(){
+  void _clearAll() {
     realController.text = "";
     dolarController.text = "";
     euroController.text = "";
   }
 
-  void _realChanged(String text){
-    if(text.isEmpty) {
+  void _realChanged(String text) {
+    if (text.isEmpty) {
       _clearAll();
       return;
     }
@@ -48,8 +46,9 @@ class _HomeState extends State<Home> {
     dolarController.text = (real / dolar).toStringAsFixed(2);
     euroController.text = (real / euro).toStringAsFixed(2);
   }
-  void _dolarChanged(String text){
-    if(text.isEmpty) {
+
+  void _dolarChanged(String text) {
+    if (text.isEmpty) {
       _clearAll();
       return;
     }
@@ -58,8 +57,9 @@ class _HomeState extends State<Home> {
     realController.text = (dolar * this.dolar).toStringAsFixed(2);
     euroController.text = (dolar * this.dolar / euro).toStringAsFixed(2);
   }
-  void _euroChanged(String text){
-    if(text.isEmpty) {
+
+  void _euroChanged(String text) {
+    if (text.isEmpty) {
       _clearAll();
       return;
     }
@@ -75,53 +75,52 @@ class _HomeState extends State<Home> {
       backgroundColor: Colors.black,
       appBar: AppBar(
         title: Text("\$ CONVERSOR \$"),
-        backgroundColor: Colors.purple,
+        backgroundColor: Colors.red[900],
         centerTitle: true,
       ),
       body: FutureBuilder<Map>(
         future: getData(),
-        builder: (context, snapshot){
-          switch(snapshot.connectionState){
+        builder: (context, snapshot) {
+          switch (snapshot.connectionState) {
             case ConnectionState.none:
+            case ConnectionState.active:
             case ConnectionState.waiting:
               return Center(
-                child: Text("Carregando dados...",
+                child: Text(
+                  "Carregando dados...",
                   style: TextStyle(color: Colors.white, fontSize: 25.0),
                   textAlign: TextAlign.center,
                 ),
               );
-            default:
-              if(snapshot.hasError){
+            case ConnectionState.done:
+              if (snapshot.hasError) {
                 return Center(
-                  child: Text("ERROR ao carregando dados...",
+                  child: Text(
+                    "ERROR ao carregando dados...",
                     style: TextStyle(color: Colors.white, fontSize: 25.0),
                     textAlign: TextAlign.center,
                   ),
                 );
-              }else{
+              } else {
                 dolar = snapshot.data["results"]["currencies"]["USD"]["buy"];
                 euro = snapshot.data["results"]["currencies"]["EUR"]["buy"];
                 return SingleChildScrollView(
-                  padding: EdgeInsets.all(20.0),
+                  padding: EdgeInsets.all(18.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: <Widget>[
-                      Icon(Icons.monetization_on, size: 150.0, color: Colors.purple),
-
+                      Icon(Icons.monetization_on,
+                          size: 150.0, color: Colors.red[900]),
                       builderInput("Reais", realController, _realChanged),
-
                       Divider(),
-
                       builderInput("Dólares", dolarController, _dolarChanged),
-
                       Divider(),
-
                       builderInput("Euros", euroController, _euroChanged),
-
                       Divider(),
-
-                      Text("Dólar: ${this.dolar.toStringAsFixed(2)} | Euro: ${this.euro.toStringAsFixed(2)}",
-                      style: TextStyle(color: Colors.purple, fontSize: 25.0),
+                      Text(
+                        "Dólar: ${this.dolar.toStringAsFixed(2)} | Euro: ${this.euro.toStringAsFixed(2)}",
+                        style:
+                            TextStyle(color: Colors.red[900], fontSize: 25.0),
                         textAlign: TextAlign.center,
                       ),
                     ],
@@ -129,31 +128,29 @@ class _HomeState extends State<Home> {
                 );
               }
           }
-        }
+          return Container();
+        },
       ),
     );
   }
 }
 
-
-Widget builderInput(String label, TextEditingController valor, Function changed){
-  return
-    TextField(
-      controller: valor,
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: TextStyle(color: Colors.purple),
-        focusedBorder: OutlineInputBorder(
-          borderSide: BorderSide(color: Colors.white, width: 1.0),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderSide: BorderSide(color: Colors.purple, width: 1.0),
-        ),
+Widget builderInput(
+    String label, TextEditingController valor, Function changed) {
+  return TextField(
+    controller: valor,
+    decoration: InputDecoration(
+      labelText: label,
+      labelStyle: TextStyle(color: Colors.white70),
+      focusedBorder: OutlineInputBorder(
+        borderSide: BorderSide(color: Colors.white, width: 1.0),
       ),
-      style: TextStyle(
-          color: Colors.purple, fontSize: 25.0
+      enabledBorder: OutlineInputBorder(
+        borderSide: BorderSide(color: Colors.white, width: 1.0),
       ),
-      onChanged: changed,
-      keyboardType: TextInputType.number,
-    );
+    ),
+    style: TextStyle(color: Colors.white, fontSize: 25.0),
+    onChanged: changed,
+    keyboardType: TextInputType.number,
+  );
 }
